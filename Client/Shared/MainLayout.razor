@@ -1,0 +1,70 @@
+﻿@inherits LayoutComponentBase
+@inject IJSRuntime js
+@inject I18nText translator
+    <TelerikRootComponent>
+        <div id="wrapper">
+            <Sidebr></Sidebr>
+            <div class="page-content-wrapper">
+                <div class="container-fluid">
+                    <nav class="navbar navbar-light navbar-expand-md border rounded shadow d-md-flex justify-content-md-center" style="opacity: 0.94;color: rgb(250,247,247);background-color: #ffffff; z-index:100" >
+                        <div class="container-fluid">
+                            <a class="navbar-brand text-left" @onclick="Minimizar"><a class="btn btn-light text-left" role="button" style="color:black" id="menu-toggle"><i class="fa fa-bars" data-bs-hover-animate="shake"></i></a></a><button class="navbar-toggler" data-toggle="collapse"
+                                                                                                                                                                                                                                                 data-target="#navcol-1">
+                                <span class="sr-only">Toggle navigation</span><span class="navbar-toggler-icon"></span>
+                            </button>
+                                <NavMenu></NavMenu>
+                            <SelectorIdiomas></SelectorIdiomas>
+                        </div>
+                    </nav>
+                    <div class="row">
+                        <div class="col-md-12 contenido">
+                                @Body
+                        </div>
+                        <div class="col-12">
+                            <div class="border rounded shadow-lg footer-basic ">
+                                <div class="social">
+                                    <a data-bs-hover-animate="jello" href="#"><i class="icon ion-social-instagram"></i></a>
+                                    <a data-bs-hover-animate="jello" href="#"><i class="icon ion-social-snapchat"></i></a>
+                                    <a data-bs-hover-animate="jello" href="#"><i class="icon ion-social-twitter"></i></a>
+                                    <a data-bs-hover-animate="jello" href="#"><i class="icon ion-social-facebook"></i></a>
+                                </div>
+                                <ul class="list-inline">
+                                    <li class="list-inline-item"><a href="#">@miTexto.Inicio</a></li>
+                                    <li class="list-inline-item"><a href="#">@miTexto.Servicios</a></li>
+                                    <li class="list-inline-item"><a href="#">@miTexto.Acerca</a></li>
+                                    <li class="list-inline-item"><a href="#">@miTexto.Terminos</a></li>
+                                    <li class="list-inline-item"><a href="#">@miTexto.Politica</a></li>
+                                </ul>
+                                <p class="copyright">@miTexto.Compania © 2020</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </TelerikRootComponent>
+@code{
+
+    Text miTexto = new Text();
+
+    protected override async Task OnInitializedAsync()
+    {
+        miTexto = await translator.GetTextTableAsync<Text>(this);
+    }
+
+    private async void Minimizar()
+    {
+        await this.js.clickMenu();
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+        await js.InvokeVoidAsync("hoverImages");
+    }
+
+
+}

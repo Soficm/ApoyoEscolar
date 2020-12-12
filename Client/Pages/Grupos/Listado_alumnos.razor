@@ -1,0 +1,30 @@
+﻿@inject GruposService servicio
+@if (listaAlumnos.Count>0)
+{ 
+    <ul class="list-group list-group-flush">
+        @foreach (var item in listaAlumnos.Take(4))
+        {
+            <li class="list-group-item">@item.Nombre @item.Apellidos</li>
+        }
+    </ul>
+}
+else
+{
+    <text>Sin datos</text>
+}
+@code {
+    [Parameter] public int idGrupo { get; set; }
+    public List<ApplicationUser> listaAlumnos { get; set; } = new List<ApplicationUser>();
+    protected override async Task OnInitializedAsync()
+    {
+        getAlumnos(idGrupo);
+    }
+
+    private async void getAlumnos(int idGrupo)
+    {
+        Console.WriteLine("CArgando info");
+
+        this.listaAlumnos = await servicio.getAlumnosGrupo(idGrupo);
+        StateHasChanged();
+    }
+}

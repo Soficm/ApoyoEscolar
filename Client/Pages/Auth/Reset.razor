@@ -1,0 +1,78 @@
+﻿@page "/resetPassword";
+@inject NavigationManager nav;
+@inject CuentaService cuenta;
+@inject I18nText translator
+@inject IJSRuntime js
+@using Microsoft.AspNetCore.WebUtilities;
+<div class="k-card">
+    <div class="k-header">
+        <h5 class="k-tile">
+            <i class="k-i-user"> </i>
+           @miTexto.Recovery
+        </h5>
+    </div>
+    <div class="k-card-body">
+        <EditForm Model="@model" OnValidSubmit="Validar">
+            <div class="form-group">
+                <input placeholder="Comtraseña" type="password" @bind="model.Password" class="k-textbox" />
+            </div>
+            <TelerikButton ButtonType="@ButtonType.Submit" Icon="@IconName.Save"> @miTexto.Enviar</TelerikButton>
+        </EditForm>
+
+    </div>
+</div>
+@code {
+    [Parameter]
+    public string email { get; set; }
+    [Parameter]
+    public string token { get; set; }
+    public ResetPasswordViewModel model { get; set; }
+
+    Text miTexto = new Text();
+    protected async override Task OnInitializedAsync()
+    {
+        miTexto = await translator.GetTextTableAsync<Text>(this);
+    }
+    protected override void OnParametersSet()
+    {
+        model.Email = this.email;
+        model.Token = this.token;
+
+    }
+
+    protected override void OnInitialized()
+    {
+        var uri = nav.ToAbsoluteUri(nav.Uri);
+
+        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("email", out var param))
+        {
+            email = param.First();
+
+        }
+        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("token", out var param1))
+        {
+            token = param1.First();
+            token = token.Replace(" ", "+");
+        }
+
+
+        model = new ResetPasswordViewModel();
+    }
+
+    async void Validar()
+    {
+        try
+        {
+            bool x = await cuenta.resetPassword(model);
+            if (x)
+            {
+                await js.MostrarMensaje(miTexto.PasswordReset, miTexto.Guardar.ToString(), TipoMensajeSweetAlert.success); 
+            }
+        }
+        catch 
+        {
+            await js.MostrarMensaje(miTexto.ePAsswordReset, miTexto.eMasTarde, TipoMensajeSweetAlert.error);
+        }
+
+    }
+}

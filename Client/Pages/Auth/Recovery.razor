@@ -1,0 +1,59 @@
+﻿@page "/recoveryPassword"
+@inject CuentaService cuenta;
+@inject I18nText translator
+@inject IJSRuntime js
+<EditForm Model="@model" OnValidSubmit="@Validar">
+    <div class="k-card">
+        <div class="k-card-header">
+            <h5 class="k-card-title">
+                @miTexto.Recovery
+            </h5>
+        </div>
+        <div class="k-card-body">
+            <div class="form-group">
+                <TelerikTextBox Label="@miTexto.Correo" @bind-Value="@model.Emal" Id="email"></TelerikTextBox>
+            </div>
+        </div>
+        <div class="k-card-footer">
+            <TelerikButton ButtonType="ButtonType.Submit" Icon="@IconName.Email"> @miTexto.Guardar</TelerikButton>
+        </div>
+
+    </div>
+   
+</EditForm>
+
+@code {
+
+    public EmailModel model = new EmailModel();
+    Text miTexto = new Text();
+    protected async override Task OnInitializedAsync()
+    {
+        miTexto = await translator.GetTextTableAsync<Text>(this);
+    }
+    async void Validar()
+    {
+        try
+        {
+            bool x = await cuenta.recoveryPassword(model.Emal);
+            if (x)
+            {
+                await js.MostrarMensaje(miTexto.sendMail, miTexto.eRevisarInfo, TipoMensajeSweetAlert.success);
+            }
+            else
+            {
+                await js.MostrarMensaje(miTexto.correoInvalido, miTexto.eRevisarInfo, TipoMensajeSweetAlert.error);
+            }
+        }
+        catch 
+        {
+            await js.MostrarMensaje(miTexto.correoInvalido, miTexto.eRevisarInfo, TipoMensajeSweetAlert.error);
+
+        }
+
+    }
+    public class EmailModel
+    {
+        public string Emal { get; set; }
+    }
+
+}

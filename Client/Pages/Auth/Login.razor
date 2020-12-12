@@ -1,0 +1,90 @@
+﻿@page "/Login"
+@inject CuentaService cuentaService
+@inject NavigationManager uriHelper
+@inject ILoginServices loginService
+@inject IJSRuntime js
+@inject I18nText translator
+
+<div class="k-card">
+    <div class="k-card-header k-primary">
+        <h2>@miTexto.LogIn </h2>
+    </div>
+    <div class="k-card-body">
+        <EditForm Model="@user" OnValidSubmit="@Validar" class="k-form">
+            <DataAnnotationsValidator />
+                <table>
+                    <tr>
+                        <td>
+                            <label for="Email">
+                                <span>@miTexto.Correo<span class="k-required">*</span></span>
+                            </label>
+                        </td>
+                        <td>
+                            <TelerikTextBox @bind-Value="@user.Email" Width="100%" Id="Email" Label="Correo"></TelerikTextBox>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <label for="Password">
+                                <span>@miTexto.Password<span class="k-required">*</span></span>
+                            </label>
+                        </td>
+                        <td>
+                            <input type="password" @bind="user.Password" placeholder="@miTexto.Password" class="k-textbox" />
+                        </td>
+                    </tr>
+                </table>
+                
+            <ValidationSummary />
+
+            <a href="/recoveryPassword"  class="k-link">@miTexto.Recovery</a>
+            <hr />
+            <div class="text-right">
+                <TelerikButton Icon="@IconName.Lock" ButtonType="@ButtonType.Submit" Primary="false">@miTexto.LogIn</TelerikButton>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+
+
+@code {
+    public TelerikAnimationContainer AnimationContainer { get; set; }
+    private UserInfo user = new UserInfo();
+    bool ShowMEnsaje { get; set; } = false;
+    string mensaje { get; set; }
+    Text miTexto = new Text();
+
+    protected override async Task OnInitializedAsync()
+    {
+        miTexto = await translator.GetTextTableAsync<Text>(this);
+    }
+    async void Validar()
+    {
+        try
+        {
+            UserToken result = await this.cuentaService.Login(user);
+            Console.WriteLine(result);
+            await loginService.Login(result.Token);
+            StateHasChanged();
+            uriHelper.NavigateTo("/");
+        }
+        catch (Exception e)
+        {
+            ShowMEnsaje = true;
+            await js.MostrarMensaje(miTexto.Error, e.Message+ " "+miTexto.eRevisarInfo, TipoMensajeSweetAlert.error);
+            this.Show();
+        }
+
+
+    }
+
+    public async void Show()
+    {
+        await AnimationContainer.ShowAsync();
+
+        await Task.Delay(6000);
+
+        await AnimationContainer.HideAsync();
+    }
+}

@@ -1,0 +1,32 @@
+﻿@inject I18nText translator
+<div id="sidebar-wrapper" style="background-color: #d3c8b2;color: rgb(73,65,56);">
+    <ul class="sidebar-nav">
+        <li class="sidebar-brand"> <a href="/" data-bs-hover-animate="bounce">@miTexto.Aplicacion<i class="fas fa-chalkboard-teacher"></i></a></li>
+        <AuthorizeView Roles="Docente">
+            <Authorized>
+                <li> <a class="text-left" href="/Materias" data-bs-hover-animate="pulse">@miTexto.Materias&nbsp;<i class="fas fa-chalkboard-teacher"></i></a></li>
+                <li> <a class="text-left" href="/Grupos" data-bs-hover-animate="pulse">@miTexto.Grupos&nbsp;<i class="fas fa-users"></i></a></li>
+            </Authorized>
+        </AuthorizeView>
+        <AuthorizeView Roles="Alumno">
+            <Authorized>
+                <li> <a class="text-left" href="/" data-bs-hover-animate="pulse">@miTexto.Inicio&nbsp;<i class="fas fa-home"></i></a></li>
+                <li> <a class="text-left" href="/Grupos" data-bs-hover-animate="pulse">@miTexto.Grupos&nbsp;<i class="fas fa-users"></i></a></li>
+                <li> <a class="text-left" href="/Actividades" data-bs-hover-animate="pulse">@miTexto.Actividades</a></li>
+            </Authorized>
+        </AuthorizeView>
+        <AuthorizeView>
+            <NotAuthorized>
+                <li> <a class="text-left disabled" href="/" data-bs-hover-animate="bounce"> @miTexto.NoRegistrado </a></li>
+            </NotAuthorized>
+        </AuthorizeView>
+    </ul>
+</div>
+@code {
+    Text miTexto = new Text();
+
+    protected override async Task OnInitializedAsync()
+    {
+        miTexto = await translator.GetTextTableAsync<Text>(this);
+    }
+}

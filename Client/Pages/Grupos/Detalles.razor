@@ -1,0 +1,309 @@
+﻿@page "/detalle-alumnos/{IdGrupo:int}"
+@inject IJSRuntime js
+@inject I18nText translator
+@inject GruposService servicio
+@inject CuentaService servicioCuenta
+    <TelerikWindow Modal="true" Width="800px" Height="600px" Centered="true" Visible="@windowVisible">
+        <WindowTitle>
+            @if (!editar)
+            {
+                <text>@miTexto.Agregar @miTexto.Alumno</text>
+            }
+            else
+            {
+                <text>@miTexto.Editar @miTexto.Alumno</text>
+            }
+
+        </WindowTitle>
+        <WindowActions>
+            <WindowAction Name="Close"></WindowAction>
+        </WindowActions>
+        <WindowContent>
+            <TelerikTabStrip @bind-ActiveTabIndex="@ActiveTabIndex">
+                <TabStripTab Title="@miTexto.usuarioRegistrado">
+                   
+                    <TelerikTextBox Label="@miTexto.Correo" @bind-Value="Busqueda"></TelerikTextBox>
+                    <TelerikButton ButtonType="@ButtonType.Button" OnClick="Buscar" Icon="@IconName.Zoom"></TelerikButton>
+                    <span class="alert-danger">@mensajeError</span>
+                    @if (listaBusqueda.Count > 0)
+                    {
+                        
+                    }
+
+
+                </TabStripTab>
+                <TabStripTab Title="@miTexto.invitarUsuario">
+                    <EditForm Model="@Invitacion" OnValidSubmit="InvitarUsuario">
+                        <DataAnnotationsValidator />
+                        <table>
+                            <tr>
+                                <td>
+                                    <label for="nombre">@miTexto.firstName:</label>
+                                </td>
+                                <td>
+                                    <TelerikTextBox Label="@miTexto.firstName" Id="nombre" @bind-Value="Invitacion.Nombre"></TelerikTextBox>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <label for="apellidos">@miTexto.lastNAme:</label>
+                                </td>
+                                <td>
+                                    <TelerikTextBox Label="@miTexto.lastNAme" Id="apellidos" @bind-Value="Invitacion.Apellidos"></TelerikTextBox>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <label for="username">@miTexto.Correo:</label>
+                                </td>
+                                <td>
+                                    <TelerikTextBox Label="@miTexto.Correo" Id="nombre" @bind-Value="Invitacion.Email"></TelerikTextBox>
+                                </td>
+                            </tr>
+                        </table>
+                        <hr />
+                        <TelerikButton Class="pull-right" Icon="@IconName.Save" ButtonType="@ButtonType.Submit"></TelerikButton>
+                        <ValidationSummary />
+                    </EditForm>
+                    
+                    
+                </TabStripTab>
+            </TelerikTabStrip>
+            
+        </WindowContent>
+    </TelerikWindow>
+<AuthorizeView Roles="Docente">
+    <Authorized>
+        
+
+        @if (listaAlumnos != null)
+        {
+            if (listaAlumnos.Count > 0)
+            {
+                <div class="k-card">
+                    <div class="k-card-header">
+                        <h3 class="k-card-title">@miTexto.Alumno @miTexto.Disponible <TelerikButton OnClick=@(()=> windowVisible = true) Icon="@IconName.PlusCircle" Class="pull-right"></TelerikButton></h3>
+                    </div>
+                    <div class="k-card-body">
+                        <TelerikGrid Data="@listaAlumnos" OnDelete="Borrar"
+                                     Pageable="true"
+                                     PageSize="5"
+                                     Sortable="true">
+                            <GridColumns>
+                                <GridColumn Field=@nameof(ApplicationUser.Nombre) Title="@miTexto.firstName" />
+                                <GridColumn Field=@nameof(ApplicationUser.Apellidos) Title="@miTexto.lastNAme" />
+                                <GridColumn Field=@nameof(ApplicationUser.Email) Title="@miTexto.Correo" />
+                                <GridCommandColumn>
+                                    <GridCommandButton Command="Delete" Icon="delete"></GridCommandButton>
+                                </GridCommandColumn>
+                            </GridColumns>
+
+                            <DetailTemplate Context="cont">
+                                @{
+                                            var alumno = cont as ApplicationUser;
+
+                                    <text>Informacion de @alumno.Email</text>
+                                }
+                            </DetailTemplate>
+                        </TelerikGrid>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="k-alert-error">
+                    <h1 class="k-text-error">@miTexto.SinRegistros <TelerikButton OnClick=@(()=> windowVisible = true) Icon="@IconName.PlusCircle" Class="pull-right"></TelerikButton></h1>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="k-alert-error">
+                <h1 class="k-text-error">@miTexto.Cargando </h1>
+
+            </div>
+        }
+    </Authorized>
+</AuthorizeView>
+<AuthorizeView Roles="Alumno">
+    <Authorized>
+        @if (listaAlumnos != null)
+        {
+            if (listaAlumnos.Count > 0)
+            {
+                <div class="k-card">
+                    <div class="k-card-header">
+                        <h3 class="k-card-title">@miTexto.Alumno @miTexto.Disponible </h3>
+                    </div>
+                    <div class="k-card-body">
+                        <TelerikGrid Data="@listaAlumnos" OnDelete="Borrar"
+                                     Pageable="true"
+                                     PageSize="5"
+                                     Sortable="true">
+                            <GridColumns>
+                                <GridColumn Field=@nameof(ApplicationUser.Nombre) Title="@miTexto.firstName" />
+                                <GridColumn Field=@nameof(ApplicationUser.Apellidos) Title="@miTexto.lastNAme" />
+                                <GridColumn Field=@nameof(ApplicationUser.Email) Title="@miTexto.Correo" />
+                            </GridColumns>
+                        </TelerikGrid>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="k-alert-error">
+                    <h1 class="k-text-error">@miTexto.SinRegistros </h1>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="k-alert-error">
+                <h1 class="k-text-error">@miTexto.Cargando </h1>
+
+            </div>
+        }
+    </Authorized>
+</AuthorizeView>
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationState { get; set; }
+    [Parameter] public int IdGrupo { get; set; }
+    Grupo grupo { get; set; }
+    Text miTexto = new Text();
+    public string mensajeError { get; set; } = "";
+    private string Result { get; set; }
+    public string Busqueda { get; set; } = "";
+    public int ActiveTabIndex { get; set; } = 0;
+    private bool windowVisible { get; set; } = false;
+    private bool editar { get; set; } = false;
+    public List<ApplicationUser> listaAlumnos { get; set; }
+    public List<ApplicationUser> listaBusqueda { get; set; }
+    public ApplicationUser model { get; set; }
+    public vistaInvitacionAlumno Invitacion { get; set; } = new vistaInvitacionAlumno();
+    protected override async Task OnInitializedAsync()
+    {
+        listaBusqueda = new List<ApplicationUser>();
+        miTexto = await translator.GetTextTableAsync<Text>(this);
+        try
+        {
+            grupo = await servicio.getGrupo(IdGrupo);
+            LoadAlumnos();
+        }
+        catch
+        {
+            await js.MostrarMensaje(miTexto.Error, "Obteniendo el grupo", TipoMensajeSweetAlert.error);
+        }
+    }
+
+    async void InvitarUsuario()
+    {
+        model = new ApplicationUser();
+        model.Apellidos = Invitacion.Apellidos;
+        model.Email = Invitacion.Email;
+        model.Nombre = Invitacion.Nombre;
+        model.PasswordHash = "Inicio12*";
+        model.UserName = model.Email;
+        model.Tipo = TipoUsuario.Alumno;
+        Console.WriteLine(model.Email);
+        try
+        {
+            model=await servicioCuenta.CrearAlumno(model);
+
+            Console.WriteLine("Este es el Id Creado" + model.Id);
+            GrupoAlumnos x = new GrupoAlumnos { IdAlumno = model, IdGrupo = grupo };
+            try
+            {
+                windowVisible = false;
+                await servicio.CrearGrupoAlumno(x);
+                LoadAlumnos();
+                await js.MostrarMensaje(miTexto.Guardar, miTexto.Success, TipoMensajeSweetAlert.success);
+            }
+            catch 
+            {
+                windowVisible = false;
+                StateHasChanged();
+                await js.MostrarMensaje(miTexto.Error, "Se creo el usuario, pero ocurrio un error al inscribirlo al grupo, buscalo como usuario registrado", TipoMensajeSweetAlert.error);
+            }
+        }
+        catch(Exception e)
+        {
+            windowVisible = false;
+            await js.MostrarMensaje(miTexto.Error, e.Message, TipoMensajeSweetAlert.error);
+        }
+        StateHasChanged();
+
+
+
+    }
+
+    async void SeleccionarAlumno(ApplicationUser item)
+    {
+        if (item != null)
+        {
+            GrupoAlumnos x= new GrupoAlumnos { IdAlumno = item, IdGrupo = grupo };
+            try
+            {
+                windowVisible = false;
+                await servicio.CrearGrupoAlumno(x);
+                LoadAlumnos();
+                await js.MostrarMensaje(miTexto.Guardar, miTexto.Success, TipoMensajeSweetAlert.success);
+            }
+            catch
+            {
+                windowVisible = false;
+                StateHasChanged();
+
+                await js.MostrarMensaje(miTexto.Guardar, miTexto.Success, TipoMensajeSweetAlert.error);
+            }
+        }
+        StateHasChanged();
+    }
+
+    async void Buscar() {
+        mensajeError = "";
+        if (Busqueda.Length >= 5)
+        {
+            listaBusqueda =await servicio.buscarAlumnos(Busqueda);
+            if (listaBusqueda.Count == 0)
+            {
+                mensajeError = miTexto.SinRegistros + " " + miTexto.eRevisarInfo;
+            }
+        }
+        else
+        {
+            mensajeError = miTexto.Error + ", al menos 5 caracteres ";
+        }
+        StateHasChanged();
+    }
+
+
+    private async void LoadAlumnos()
+    {
+        this.editar = false;
+        Console.WriteLine("****"+grupo.Descripcion);
+        this.listaAlumnos = await this.servicio.getAlumnosGrupo(grupo.Id);
+        StateHasChanged();
+    }
+    async void Borrar(GridCommandEventArgs args)
+    {
+        ApplicationUser alumno =(ApplicationUser) args.Item;
+        if (await js.Confirm(miTexto.Eliminar, miTexto.seguro + " " + alumno.Nombre+" "+alumno.Apellidos, TipoMensajeSweetAlert.question))
+        {
+            try
+            {
+
+                this.windowVisible = false;
+                await servicio.BorrarGrupoAlumno(grupo.Id, alumno.Id);
+                await js.MostrarMensaje(miTexto.Eliminar, miTexto.Success, TipoMensajeSweetAlert.success);
+
+                LoadAlumnos();
+                StateHasChanged();
+            }
+            catch (Exception e)
+            {
+                await js.MostrarMensaje("Error", e.Message, TipoMensajeSweetAlert.error);
+            }
+        }
+    }
+}

@@ -1,0 +1,94 @@
+﻿@page "/Registro"
+
+@inject CuentaService cuentaService
+@inject NavigationManager uriHelper
+@inject ILoginServices loginService
+@inject I18nText translator
+@inject IJSRuntime js
+<div class="k-card">
+    <div class="k-card-header k-primary">
+        <h2>@miTexto.Registrate </h2>
+    </div>
+    <div class="k-card-body">
+        <EditForm Model="@user" OnValidSubmit="@Validar" class="k-form">
+            <DataAnnotationsValidator />
+            <table>
+                <tr>
+                    <td>
+                        <label for="Email">
+                            <span>@miTexto.Correo<span class="k-required">*</span></span>
+                        </label>
+                    </td>
+                    <td>
+                        <TelerikTextBox @bind-Value="@user.Email" Width="100%" Id="Email" Label="Correo"></TelerikTextBox>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label for="radio1">
+                            <span>@miTexto.TipoUsuario</span>
+                        </label>
+                    </td>
+                    <td>
+                        <span>@miTexto.Alumno</span>
+                        <input type="radio" bind="@user.Tipo" name="Tipo" id="radio" checked="@(user.Tipo == TipoUsuario.Alumno)" value="@TipoUsuario.Alumno" @onchange="@(() => { user.Tipo = TipoUsuario.Alumno; })" />
+                        <span>@miTexto.Docente</span>
+                        <input type="radio" bind="@user.Tipo" name="Tipo" id="radio2" checked="@(user.Tipo == TipoUsuario.Docente)" value="@TipoUsuario.Docente" @onchange="@(() => { user.Tipo = TipoUsuario.Docente; })" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label for="Password">
+                            <span>@miTexto.Password<span class="k-required">*</span></span>
+                        </label>
+                    </td>
+                    <td>
+                        <InputPassword @bind-Value="user.Password" style="width:300px" class="k-textbox"></InputPassword>
+                    </td>
+                </tr>
+            </table>
+
+            <ValidationSummary />
+            
+            <div class="text-right">
+                <TelerikButton Icon="@IconName.Lock" ButtonType="@ButtonType.Submit" Primary="false">Guardar</TelerikButton>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    private UserInfo user = new UserInfo();
+    Text miTexto = new Text();
+    protected async override Task OnInitializedAsync()
+    {
+        miTexto = await translator.GetTextTableAsync<Text>(this);
+        this.user.Tipo = TipoUsuario.Alumno;
+    }
+    async void Validar()
+    {
+        try
+        {
+            UserToken result = await this.cuentaService.CrearUsuario(user);
+            try
+            {
+                await loginService.Login(result.Token);
+                uriHelper.NavigateTo("/");
+                await Task.Delay(2000);
+                StateHasChanged();
+            }
+            catch
+            {
+                await js.MostrarMensaje(miTexto.eCrearUsuario, miTexto.eAuthentic+ ", "+miTexto.eMasTarde, TipoMensajeSweetAlert.error);
+            }
+        }
+        catch
+        {
+            await js.MostrarMensaje(miTexto.eCrearUsuario, miTexto.eRevisarInfo, TipoMensajeSweetAlert.error);
+        }
+
+
+
+
+    }
+}

@@ -1,0 +1,254 @@
+﻿@page "/Grupos"
+@inject IJSRuntime js
+@inject I18nText translator
+@inject GruposService servicio
+<AuthorizeView Roles="Docente">
+    <Authorized>
+        @if (ListaGrupos != null)
+        {
+            if (ListaGrupos.Count > 0)
+            {
+                <div class="k-card">
+                    <div class="k-card-header">
+                        <h3 class="k-card-title">@miTexto.Grupos @miTexto.Disponible <TelerikButton ButtonType="@ButtonType.Button" OnClick=@(()=> windowVisible = true) Icon="@IconName.PlusCircle" Class="pull-right"></TelerikButton></h3>
+                    </div>
+                    <div class="k-card-body">
+                        <div class="row" style="margin-left:10px">
+                            @foreach (var item in ListaGrupos)
+                            {
+                                <div class="col-4" style="padding-bottom:20px;">
+                                    <div class="k-card bounce animated">
+                                        <div class="k-card-header">
+                                            <h4 class="k-card-title">@item.Descripcion</h4>
+                                            <h5 class="k-card-subtitle">Ciclo: @item.CicloEscolar</h5>
+                                        </div>
+                                        <div class="k-card-body">
+                                            <Listado_alumnos idGrupo="@item.Id"></Listado_alumnos>
+                                            <a class="k-link small pull-right" href="/detalle-alumnos/@item.Id">@miTexto.listaAlumnos</a>
+                                        </div>
+                                        <div class="k-card-footer">
+                                            <TelerikButton Class="k-flat" Icon="@IconName.Edit" @onclick="(() => Editar(item))">@miTexto.Editar</TelerikButton>
+                                            <TelerikButton Class="k-flat" Icon="@IconName.Delete" @onclick="(() => Borrar(item))">@miTexto.Eliminar</TelerikButton>
+                                            <a href="/ActividadesGrupo/@item.Id" class="k-flat pull-right"><i class="fas fa-gears"></i> Actividades</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    <div class="k-card-footer">
+                        <h3 class="k-card-title">@ListaGrupos.Count @miTexto.Grupos @miTexto.Disponible </h3>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="k-alert-error">
+                    <h1 class="k-text-error">@miTexto.SinRegistros <TelerikButton OnClick=@(()=> windowVisible = true) Icon="@IconName.PlusCircle" Class="pull-right"></TelerikButton></h1>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="k-alert-error">
+                <h1 class="k-text-error">@miTexto.Cargando </h1>
+
+            </div>
+        }
+    </Authorized>
+</AuthorizeView>
+
+<AuthorizeView Roles="Alumno">
+    <Authorized>
+        @if (ListaGrupos != null)
+        {
+            if (ListaGrupos.Count > 0)
+            {
+                <div class="k-card">
+                    <div class="k-card-header">
+                        <h3 class="k-card-title">@miTexto.Grupos @miTexto.Disponible </h3>
+                    </div>
+                    <div class="k-card-body">
+                        <div class="row" style="margin-left:10px">
+                            @foreach (var item in ListaGrupos)
+                            {
+                                <div class="col-4" style="padding-bottom:20px;">
+                                    <div class="k-card bounce animated">
+                                        <div class="k-card-header">
+                                            <h4 class="k-card-title">@item.Descripcion</h4>
+                                            <h5 class="k-card-subtitle">Ciclo: @item.CicloEscolar</h5>
+                                        </div>
+                                        <div class="k-card-body">
+                                            <Listado_alumnos idGrupo="@item.Id"></Listado_alumnos>
+                                            <a class="k-link small pull-right" href="/detalle-alumnos/@item.Id">@miTexto.listaAlumnos</a>
+                                        </div>
+                                        <div class="k-card-footer">
+                                            <a href="/ActividadesGrupo/@item.Id" class="k-flat pull-right"><i class="fas fa-gears"></i> Actividades</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    <div class="k-card-footer">
+                        <h3 class="k-card-title">@ListaGrupos.Count @miTexto.Grupos @miTexto.Disponible </h3>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="k-alert-error">
+                    <h1 class="k-text-error">@miTexto.SinRegistros </h1>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="k-alert-error">
+                <h1 class="k-text-error">@miTexto.Cargando </h1>
+
+            </div>
+        }
+    </Authorized>
+</AuthorizeView>
+<TelerikWindow Modal="true" Width="500" Height="500" Centered="true" Visible="@windowVisible">
+    <WindowTitle>
+        @if (!editar)
+        {
+            <text>@miTexto.Agregar @miTexto.Grupos</text>
+        }
+        else
+        {
+            <text>@miTexto.Editar @miTexto.Grupos</text>
+        }
+
+    </WindowTitle>
+    <WindowActions>
+        <WindowAction Name="Close"></WindowAction>
+    </WindowActions>
+    <WindowContent>
+        <EditForm Model="@model" OnValidSubmit="guardarGrupo">
+
+            <table>
+                <tr>
+                    <td>
+                        <label for="ciclo">@miTexto.ciclo:</label>
+                    </td>
+                    <td>
+                        <TelerikTextBox Id="ciclo" Label="@miTexto.ciclo" @bind-Value="model.CicloEscolar"></TelerikTextBox>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label for="descripcion">@miTexto.Nombre:</label>
+                    </td>
+                    <td>
+                        <TelerikTextBox Id="descripcion" Label="@miTexto.Nombre" @bind-Value="model.Descripcion"></TelerikTextBox>
+                    </td>
+                </tr>
+            </table>
+            <hr />
+            <div class="form-group">
+                <TelerikButton Icon="@IconName.Save" ButtonType="ButtonType.Submit" Class="pull-right"></TelerikButton>
+            </div>
+        </EditForm>
+    </WindowContent>
+</TelerikWindow>
+@code {
+    private List<ApplicationUser> alumnos { get; set; }
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationState { get; set; }
+    private bool editar { get; set; } = false;
+    public List<Grupo> ListaGrupos { get; set; }
+    private bool windowVisible { get; set; }
+    private Grupo model { get; set; }
+    private string mensaje { get; set; }
+    Text miTexto = new Text();
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        miTexto = await translator.GetTextTableAsync<Text>(this);
+        LoadGrupos();
+    }
+    private async void LoadGrupos()
+    {
+        var authState = await authenticationState;
+        var user = authState.User.Identity.Name;
+        this.model = new Grupo();
+        this.editar = false;
+        this.model.Docentes = new ApplicationUser { UserName = user };
+        try
+        {
+            if (authState.User.IsInRole("Docente"))
+            {
+                this.ListaGrupos = await this.servicio.getGruposByDocente(user);
+            }
+            else
+            {
+                this.ListaGrupos = await this.servicio.getGruposByAlumno(user);
+            }
+
+        }
+        catch (Exception e)
+        {
+            await js.MostrarMensaje(miTexto.Error, e.Message, TipoMensajeSweetAlert.error);
+        }
+
+        StateHasChanged();
+    }
+
+    private async void guardarGrupo()
+    {
+        try
+        {
+            if (editar == false)
+            {
+                await this.servicio.CrearGrupo(model);
+            }
+            else
+            {
+                await this.servicio.EditarGrupo(model);
+            }
+            windowVisible = false;
+            StateHasChanged();
+            await js.MostrarMensaje(miTexto.Guardar, model.Descripcion + miTexto.Success, TipoMensajeSweetAlert.success);
+
+            LoadGrupos();
+        }
+        catch (Exception e)
+        {
+            await js.MostrarMensaje("Error", e.Message, TipoMensajeSweetAlert.error);
+            LoadGrupos();
+        }
+
+    }
+    async void Borrar(Grupo grupo)
+    {
+        if (await js.Confirm(miTexto.Eliminar, miTexto.seguro + " " + grupo.Descripcion, TipoMensajeSweetAlert.question))
+        {
+            try
+            {
+                this.windowVisible = false;
+                await servicio.BorrarGrupo(grupo.Id);
+                await js.MostrarMensaje(miTexto.Eliminar, miTexto.Success, TipoMensajeSweetAlert.success);
+                LoadGrupos();
+            }
+            catch (Exception e)
+            {
+                await js.MostrarMensaje("Error", e.Message, TipoMensajeSweetAlert.error);
+            }
+        }
+    }
+    private async void Editar(Grupo mod)
+    {
+
+        var authState = await authenticationState;
+        var user = authState.User.Identity.Name;
+        this.model = mod;
+        this.model.Docentes = new ApplicationUser { UserName = user };
+        windowVisible = true;
+        this.editar = true;
+        StateHasChanged();
+    }
+}

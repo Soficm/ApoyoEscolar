@@ -1,0 +1,213 @@
+﻿@page "/Materias"
+@inject MateriaService service
+@inject IJSRuntime js
+@inject I18nText translator
+
+<TelerikWindow Modal="true" Width="500" Height="500" Centered="true" Visible="@windowVisible">
+    <WindowTitle>
+        @if (!editar)
+        {
+            <text>@miTexto.Agregar @miTexto.Materias</text>
+        }
+        else
+        {
+            <text>@miTexto.Editar @miTexto.Materias</text>
+        }
+
+    </WindowTitle>
+    <WindowActions>
+        <WindowAction Name="Close"></WindowAction>
+    </WindowActions>
+    <WindowContent>
+        <EditForm Model="@model" OnValidSubmit="guardarMateria">
+
+            <table>
+                <tr>
+                    <td>
+                        <label for="nombre">@miTexto.Nombre:</label>
+                    </td>
+                    <td>
+                        <TelerikTextBox Label="Nombre" @bind-Value="model.Nombre"></TelerikTextBox>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label for="creditos">@miTexto.Creditos:</label>
+                    </td>
+                    <td>
+                        <TelerikNumericTextBox @bind-Value=@model.Creditos Min="0" Max="10" Id="creditos"></TelerikNumericTextBox>
+                    </td>
+                </tr>
+            </table>
+            <hr />
+            <div class="form-group">
+                <TelerikButton Icon="@IconName.Save" ButtonType="ButtonType.Submit" Class="pull-right"></TelerikButton>
+            </div>
+        </EditForm>
+    </WindowContent>
+</TelerikWindow>
+<AuthorizeView Roles="Docente">
+    <Authorized>
+        @if (ListaMaterias != null)
+        {
+            if (ListaMaterias.Count > 0)
+            {
+
+                <TelerikListView Data="@ListaMaterias" Pageable="true" PageSize="5">
+                    <HeaderTemplate>
+
+                        <h4><i class="fa fa-book"></i> @miTexto.Materias @miTexto.Disponible<TelerikButton Icon="@IconName.PlusCircle" @onclick="(() => mostrar())" Class="pull-right"></TelerikButton></h4>
+                    </HeaderTemplate>
+                    <Template Context="con">
+                        @{
+                                    var mat = con as Materias;
+                        }
+                        <div class="k-card k-card-horizontal" style="padding:10px;" data-aos="zoom-in-down" data-aos-delay="50">
+                            <div class="k-vbox k-column">
+                                <div class="k-card-body">
+                                    <h4 class="k-card-title">@mat.Nombre</h4>
+                                    <h5 class="k-card-subtitle">@miTexto.Creditos: <strong>@mat.Creditos</strong></h5>
+                                </div>
+                                <div class="k-card-actions k-card-actions-horizontal k-card-actions-start">
+                                    <TelerikButton Class="k-flat" Icon="@IconName.Edit" @onclick="(() => Editar(mat))">@miTexto.Editar</TelerikButton>
+                                    <TelerikButton Class="k-flat" Icon="@IconName.Delete" @onclick="(() => Borrar(mat))">@miTexto.Eliminar</TelerikButton>
+                                </div>
+                            </div>
+                            <img class="k-card-image" src=@($"img/young-college-students.jpg") />
+                        </div>
+
+                    </Template>
+                </TelerikListView>
+
+
+            }
+            else
+            {
+                <div class="k-alert-error">
+                    <h1 class="k-text-error">@miTexto.SinRegistros <TelerikButton OnClick=@(()=> windowVisible = true) Icon="@IconName.PlusCircle" Class="pull-right"></TelerikButton></h1>
+
+                </div>
+            }
+        }
+        else
+        {
+            <div class="k-alert-error">
+                <h1 class="k-text-error">@miTexto.Cargando </h1>
+
+            </div>
+        }
+    </Authorized>
+</AuthorizeView>
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationState { get; set; }
+    private bool editar { get; set; } = false;
+    public TelerikAnimationContainer AnimationContainer { get; set; }
+    public List<Materias> ListaMaterias { get; set; }
+    private bool windowVisible { get; set; }
+    private Materias model { get; set; }
+    Text miTexto = new Text();
+
+    protected override async Task OnInitializedAsync()
+    {
+        miTexto = await translator.GetTextTableAsync<Text>(this);
+        LoadMaterias();
+    }
+
+
+    void mostrar()
+    {
+        this.editar = false;
+        this.model.Creditos = 0;
+        this.model.Nombre = "";
+        this.windowVisible = true;
+    }
+    async void Borrar(Materias mat)
+    {
+        
+        if (await js.Confirm(miTexto.Eliminar, miTexto.seguro +" "+ mat.Nombre, TipoMensajeSweetAlert.question))
+        {
+            try
+            {
+                await service.BorrarMateria(mat.Id);
+                await js.MostrarMensaje(miTexto.Eliminar, miTexto.Success, TipoMensajeSweetAlert.success);
+                Show();
+                LoadMaterias();
+
+
+            }
+            catch (Exception e)
+            {
+                await js.MostrarMensaje("Error", e.Message, TipoMensajeSweetAlert.error);
+                Show();
+            }
+        }
+    }
+    private async void Editar(Materias mod)
+    {
+        /*this.model.Nombre = mod.Nombre;
+        this.model.Id = mod.Id;
+        this.model.Creditos = mod.Id;
+        */
+        var authState = await authenticationState;
+        var user = authState.User.Identity.Name;
+        this.model = mod;
+        this.model.Docente = new ApplicationUser { UserName = user };
+        windowVisible = true;
+        this.editar = true;
+        StateHasChanged();
+    }
+    private async void guardarMateria()
+    {
+        try
+        {
+            if (editar == false)
+            {
+                await this.service.CrearMateria(model);
+            }
+            else
+            {
+                await this.service.EditarMateria(model);
+            }
+            windowVisible = false;
+            StateHasChanged();
+            await js.MostrarMensaje(miTexto.Guardar, model.Nombre + miTexto.Success, TipoMensajeSweetAlert.success);
+            Show();
+            LoadMaterias();
+        }
+        catch (Exception e)
+        {
+            await js.MostrarMensaje("Error", e.Message, TipoMensajeSweetAlert.error);
+        }
+
+    }
+    private async void LoadMaterias()
+    {
+        var authState = await authenticationState;
+        var user = authState.User.Identity.Name;
+        this.model = new Materias { Creditos = 0 };
+        this.editar = false;
+        this.model.Docente = new ApplicationUser { UserName = user };
+        try
+        {
+            this.ListaMaterias = await this.service.getMaterias(user);
+            StateHasChanged();
+        }
+        catch(Exception e)
+        {
+            await js.MostrarMensaje(miTexto.Error, e.Message, TipoMensajeSweetAlert.error);
+        }
+
+    }
+    public async void Show()
+    {
+
+        await AnimationContainer.ShowAsync();
+
+        await Task.Delay(6000);
+
+        await AnimationContainer.HideAsync();
+    }
+
+}

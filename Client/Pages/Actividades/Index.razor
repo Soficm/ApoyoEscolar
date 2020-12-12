@@ -1,0 +1,236 @@
+﻿@page "/ActividadesGrupo/{idGrupo:int}"
+@inject IJSRuntime js
+@inject I18nText translator
+@inject GruposService servicio
+@inject ActividadesService servicioActividades
+@inject MateriaService service
+
+<div class="row">
+    <div class="col-9">
+        <AuthorizeView Roles="Docente, Administrador">
+            <Authorized>
+                <TelerikScheduler Data="@Appointments"
+                                  OnUpdate="@UpdateAppointment"
+                                  OnCreate="@AddAppointment"
+                                  OnDelete="@DeleteAppointment"
+                                  OnEdit="@EditHandler" OnCancel="@CancelHandler"
+                                  AllowCreate="true" AllowDelete="true" AllowUpdate="true"
+                                  @bind-Date="@StartDate" Height="600px" @bind-View="@CurrView">
+                    <SchedulerViews>
+                        <SchedulerDayView StartTime="@DayStart" />
+                        <SchedulerWeekView StartTime="@DayStart" />
+                        <SchedulerMultiDayView StartTime="@DayStart" NumberOfDays="10" />
+                    </SchedulerViews>
+                    <SchedulerResources>
+                        <SchedulerResource Field="IdMateria" TextField="@(nameof(Materias.Nombre))" Data="listaMaterias" ValueField="@(nameof(Materias.IdString))"></SchedulerResource>
+                    </SchedulerResources>
+                </TelerikScheduler>
+            </Authorized>
+        </AuthorizeView>
+        <AuthorizeView Roles="Alumno">
+            <Authorized>
+                <TelerikScheduler Data="@Appointments" AllowUpdate="true" 
+                                  @bind-Date="@StartDate" Height="600px" @bind-View="@CurrView">
+                    <SchedulerViews>
+                        <SchedulerDayView StartTime="@DayStart" />
+                        <SchedulerWeekView StartTime="@DayStart" />
+                        <SchedulerMultiDayView StartTime="@DayStart" NumberOfDays="10" />
+                    </SchedulerViews>
+                    <SchedulerResources>
+                        <SchedulerResource Field="IdMateria" TextField="@(nameof(Materias.Nombre))" Data="listaMaterias" ValueField="@(nameof(Materias.IdString))"></SchedulerResource>
+                    </SchedulerResources>
+                </TelerikScheduler>
+            </Authorized>
+        </AuthorizeView>
+    </div>
+    <div class="col-3">
+        <div class="k-card">
+            <div class="k-card-header">
+                <h3 class="k-card-subtitle">@miTexto.Materias</h3>
+            </div>
+            <div class="k-card-body">
+                <ul class="list-group list-group-flush">
+                    @foreach (var item in listaMaterias)
+                    {
+                        <li class="list-group-item" style="color:@item.Color"> @item.Nombre</li>
+                    }
+                </ul>
+            </div>
+        </div>
+
+
+    </div>
+</div>
+   
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationState { get; set; }
+    [Parameter] public int IdGrupo { get; set; }
+    Text miTexto = new Text();
+    private bool docente { get; set; }
+    Grupo grupo { get; set; }
+    List<Materias> listaMaterias = new List<Materias>();
+    public DateTime StartDate { get; set; } = new DateTime(2019, 11, 29);
+    public SchedulerView CurrView { get; set; } = SchedulerView.Week;
+    public DateTime DayStart { get; set; } = new DateTime(2000, 1, 1, 8, 0, 0);//the time portion is important
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        StartDate = DateTime.Now;
+        miTexto = await translator.GetTextTableAsync<Text>(this);
+        try
+        {
+            var authState = await authenticationState;
+            var user = authState.User.Identity.Name;
+            grupo = await servicio.getGrupo(IdGrupo);
+            if (authState.User.IsInRole("Docente"))
+            {
+
+                listaMaterias = await this.service.getMaterias(user);
+                getActividades();
+            }
+            else
+            {
+                listaMaterias = await this.service.getMateriasByGrupo(grupo.Id);
+                getActividades();
+            }
+
+        }
+        catch
+        {
+            await js.MostrarMensaje(miTexto.Error, "Obteniendo el grupo", TipoMensajeSweetAlert.error);
+        }
+    }
+    async void getActividades()
+    {
+        try
+        {
+            this.Appointments = await servicioActividades.getActividadesGrupo(grupo.Id);
+        }
+        catch
+        {
+            await js.MostrarMensaje("Error");
+        }
+        StateHasChanged();
+    }
+
+    async void UpdateAppointment(SchedulerUpdateEventArgs args)
+    {
+        SchedulerAppointment item = (SchedulerAppointment)args.Item;
+        var matchingItem = Appointments.FirstOrDefault(a => a.Id == item.Id);
+        if (matchingItem != null)
+        {
+            matchingItem.Title = item.Title;
+            matchingItem.Description = item.Description;
+            matchingItem.Start = item.Start;
+            matchingItem.End = item.End;
+            matchingItem.IsAllDay = item.IsAllDay;
+            matchingItem.RecurrenceExceptions = item.RecurrenceExceptions;
+            matchingItem.RecurrenceRule = item.RecurrenceRule;
+            matchingItem.IdMateria = item.IdMateria;
+            matchingItem.Id = item.Id;
+        }
+
+        try
+        {
+            await servicioActividades.editarActividad(matchingItem);
+        }
+        catch (Exception e)
+        {
+            await js.MostrarMensaje(miTexto.Error, e.Message, TipoMensajeSweetAlert.error);
+        }
+    }
+
+    async void agregarTarea(SchedulerAppointment tarea)
+    {
+        try
+        {
+            await this.servicioActividades.guardaActividad(tarea);
+        }
+        catch(Exception e)
+        {
+            await js.MostrarMensaje("Error" + e.Message);
+        }
+    }
+
+    void AddAppointment(SchedulerCreateEventArgs args)
+    {
+        try
+        {
+            SchedulerAppointment item = args.Item as SchedulerAppointment;
+            item.IdGrupo = this.grupo.Id;
+            this.agregarTarea(item);
+            Appointments.Add(item);
+        }
+        catch
+        {
+
+        }
+    }
+
+    async void DeleteAppointment(SchedulerDeleteEventArgs args)
+    {
+        SchedulerAppointment item = (SchedulerAppointment)args.Item;
+        Appointments.Remove(item);
+
+        if (item.RecurrenceId != null)
+        {
+            // a recurrence exception was deleted, you may want to update
+            // the actual data source - an item where theItem.Id == item.RecurrenceId
+            // and remove the current exception date from the list of its RecurrenceExceptions
+        }
+
+        if (!string.IsNullOrEmpty(item.RecurrenceRule) && item.RecurrenceExceptions?.Count > 0)
+        {
+            // a recurring appointment was deleted that had exceptions, you may want to
+            // delete or update any exceptions from the data source - look for
+            // items where theItem.RecurrenceId == item.Id
+        }
+        try
+        {
+            servicioActividades.eliminarActividad(item);
+        }
+        catch
+        {
+            await js.MostrarMensaje(miTexto.Eliminar, miTexto.Error, TipoMensajeSweetAlert.error);
+        }
+
+
+    }
+
+    //Handlers for application logic flexibility
+    void EditHandler(SchedulerEditEventArgs args)
+    {
+        SchedulerAppointment item = args.Item as SchedulerAppointment;
+        if (!args.IsNew) // an edit operation, otherwise - an insert operation
+        {
+            // you can prevent opening an item for editing based on a condition
+            if (item.Title.Contains("vet", StringComparison.InvariantCultureIgnoreCase))
+            {
+                args.IsCancelled = true;
+            }
+        }
+        else
+        {
+            // new appointment
+            DateTime SlotStart = args.Start; // the start of the slot the user clicked
+            DateTime SlotEnd = args.End; // the start of the slot the user clicked
+            bool InsertInAllDay = args.IsAllDay; // whether the user started insertion in the All Day row
+        }
+    }
+
+    void CancelHandler(SchedulerCancelEventArgs args)
+    {
+        // you can know when a user wanted to modify an appointment but decided not to
+        // the model you get contains the new data from the edit form so you can see what they did
+        SchedulerAppointment item = args.Item as SchedulerAppointment;
+    }
+
+    // sample data and scheduler settings
+
+    List<SchedulerAppointment> Appointments = new List<SchedulerAppointment>();
+
+
+}

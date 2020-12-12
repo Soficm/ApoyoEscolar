@@ -1,0 +1,91 @@
+﻿@page "/DatosPersonales"
+@inject CuentaService cuentaService
+@inject IJSRuntime js
+@inject I18nText translator
+@inject I18nText translator
+
+<div class="k-card">
+    <div class="k-card-header">
+            <h3 class="k-card-title">@miTexto.Editar @miTexto.Datos</h3>
+    </div>
+    <div class="k-card-body">
+        @if (model.UserName != null)
+        {
+            <EditForm Model="model" OnValidSubmit="guardar">
+                <table>
+                    <tr>
+                        <td>
+                            <label for="firstName">@miTexto.firstName</label>
+                        </td>
+                        <td>
+                            <TelerikTextBox Id="firstName" @bind-Value="model.Nombre" Label="@miTexto.firstName"></TelerikTextBox>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <label for="lastName">@miTexto.lastNAme</label>
+                        </td>
+                        <td>
+                            <TelerikTextBox Id="lastName" @bind-Value="model.Apellidos" Label="@miTexto.lastNAme"></TelerikTextBox>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <label for="phone">@miTexto.Phone</label>
+                        </td>
+                        <td>
+                            <TelerikTextBox Id="phone" @bind-Value="model.PhoneNumber" Label="@miTexto.Phone"></TelerikTextBox>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">
+                            <TelerikButton Class="pull-right" ButtonType="ButtonType.Submit" Icon="@IconName.Save"></TelerikButton>
+                        </td>
+                    </tr>
+                </table>
+            </EditForm>
+        }
+        else
+        {
+            <h3>@miTexto.Cargando</h3>
+        }
+
+    </div>
+</div>
+
+@code {
+    public bool editar { get; set; }
+    public ApplicationUser model { get; set; } = new ApplicationUser();
+    Text miTexto = new Text();
+
+    protected override async Task OnInitializedAsync()
+    {
+        miTexto = await translator.GetTextTableAsync<Text>(this);
+        getDatosPersonales();
+    }
+    private async void getDatosPersonales()
+    {
+        try
+        {
+            this.model = await cuentaService.getUser();
+            StateHasChanged();
+        }
+        catch (Exception e)
+        {
+            await js.MostrarMensaje(miTexto.Error, e.Message, TipoMensajeSweetAlert.error);
+        }
+    }
+    private async void guardar()
+    {
+        try
+        {
+            this.model=await this.cuentaService.guardarUsuario(model);
+            await js.MostrarMensaje(miTexto.Guardar, miTexto.Success, TipoMensajeSweetAlert.success);
+        }
+        catch(Exception e)
+        {
+            await js.MostrarMensaje(miTexto.Error, e.Message, TipoMensajeSweetAlert.error);
+        }
+        StateHasChanged();
+    }
+}

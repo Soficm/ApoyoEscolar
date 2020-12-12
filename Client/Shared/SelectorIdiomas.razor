@@ -1,0 +1,32 @@
+﻿@inject I18nText TranslateService
+@using System.Threading
+<i class="fas fa-world"></i><select class="k-dropdown" @onchange="CambioIdioma">
+    <option value="es" selected="@(idiomaActual=="es")">Español</option>
+    <option value="en" selected="@(idiomaActual=="en")">English</option>
+</select>
+
+@code {
+    string idiomaActual;
+    protected override async Task OnInitializedAsync()
+    {
+        var lang = await TranslateService.GetCurrentLanguageAsync();
+        if (new[] { "en", "es" }.Contains(lang.Split('-')[0]))
+        {
+            idiomaActual = lang;
+        }
+        else
+        {
+            idiomaActual = "es";
+        }
+    }
+    async Task CambioIdioma(ChangeEventArgs args){
+        Console.WriteLine($"OnChange:{args.Value}");
+        idiomaActual = args.Value as string;
+        await TranslateService.SetCurrentLanguageAsync(idiomaActual);
+
+       
+        //para telerik
+
+    }
+
+}
