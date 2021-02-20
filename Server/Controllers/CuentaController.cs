@@ -27,6 +27,27 @@ namespace Apoyo.Server.Controllers
         private readonly IConfiguration _configuration;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly ApplicationDbContext _context;
+        public CuentaController()
+        {
+
+        }
+        public int Sumar(int a, int b)
+        {
+            try
+            {
+                if (a == 0 || b == 0)
+                {
+                    throw new Exception("Error");
+                }
+                return a + b;
+            }
+            catch (Exception e)
+            {
+
+                return 0;
+            }
+            
+        }
         public CuentaController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> singInManager, IConfiguration configuration, RoleManager<IdentityRole> roleManager, ApplicationDbContext context)
         {
             _usermanager = userManager;

@@ -9,6 +9,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Apoyo.Client", "Client\Apoy
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Apoyo.Shared", "Shared\Apoyo.Shared.csproj", "{4D640033-B072-46FE-9DC6-DA64323A6813}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PruebasUnitarias", "PruebasUnitarias\PruebasUnitarias.csproj", "{AEB57015-D1B0-48C7-BD64-3AF4351BBC76}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{4D640033-B072-46FE-9DC6-DA64323A6813}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4D640033-B072-46FE-9DC6-DA64323A6813}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4D640033-B072-46FE-9DC6-DA64323A6813}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AEB57015-D1B0-48C7-BD64-3AF4351BBC76}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AEB57015-D1B0-48C7-BD64-3AF4351BBC76}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AEB57015-D1B0-48C7-BD64-3AF4351BBC76}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AEB57015-D1B0-48C7-BD64-3AF4351BBC76}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
